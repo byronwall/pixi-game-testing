@@ -1,0 +1,33 @@
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #282c34;
+  color: white;
+  margin: 0;
+}
+
+.card {
+  background-color: #61dafb;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+h1 {
+  text-align: center;
+}
+
+a {
+  color: #282c34;
+  text-decoration: none;
+  font-weight: bold;
+}
