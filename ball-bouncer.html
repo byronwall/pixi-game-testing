@@ -1,22 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ball Bouncer Game</title>
     <style>
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
     </style>
-</head>
 
-<body>
-    <script src="game-script.js" type="module"></script>
-</body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.5.1/pixi.min.js"></script>
+  </head>
 
+  <body>
+    <script>
+      const Application = PIXI.Application;
+      const Graphics = PIXI.Graphics;
+      const Text = PIXI.Text;
+      const TextStyle = PIXI.TextStyle;
+
+      (async () => {
+        const app = new Application();
+        await app.init({ background: "#000000", resizeTo: window });
+        document.body.appendChild(app.canvas);
+
+        const COLORS = [
+          0xff6633, 0xff33cc, 0xcc33ff, 0x33ccff, 0x33ff66, 0xffff66,
+        ];
+        const NUM_BALLS = 120;
+        const MAX_RADIUS = 20;
+        const MIN_RADIUS = 5;
+        const AVOID_DISTANCE = 50;
+        const balls = [];
+        const pins = [];
+
+        COLORS.forEach((color, index) => {
+          const pin = new Graphics();
+          pin.beginFill(color, 0.5);
+          pin.drawRect(0, 0, 50, 50);
+          pin.endFill();
+
+          pin.x = Math.random() * (app.screen.width - 50);
+          pin.y = Math.random() * (app.screen.height - 50);
+          app.stage.addChild(pin);
+          pins.push({ x: pin.x + 25, y: pin.y + 25, color });
+        });
+
+        COLORS.forEach((color, index) => {
+          for (let i = 0; i < NUM_BALLS / COLORS.length; i++) {
+            const ball = new Graphics();
+            ball.targetColor = color;
+
+            ball.x = Math.random() * app.screen.width;
+            ball.y = Math.random() * app.screen.height;
+            ball.vx = (Math.random() - 0.5) * 5;
+            ball.vy = (Math.random() - 0.5) * 5;
+            ball.inPin = false;
+
+            const pin = pins.find((pin) => pin.color === color);
+            const distanceToPin = Math.sqrt(
+              Math.pow(ball.x - pin.x, 2) + Math.pow(ball.y - pin.y, 2)
+            );
+            ball.radius = mapRange(
+              distanceToPin,
+              0,
+              app.screen.width,
+              MIN_RADIUS,
+              MAX_RADIUS
+            );
+
+            app.stage.addChild(ball);
+            balls.push(ball);
+          }
+        });
+
+        const mouseOrb = new Graphics();
+        app.stage.addChild(mouseOrb);
+
+        let mouseX = 0;
+        let mouseY = 0;
+        let orbRadius = AVOID_DISTANCE;
+        let winText = null;
+
+        const winTextStyle = new TextStyle({
+          fontFamily: "Arial",
+          fontSize: 36,
+          fill: "white",
+          align: "center",
+        });
+
+        app.view.addEventListener("mousemove", (event) => {
+          const rect = app.view.getBoundingClientRect();
+          mouseX = event.clientX - rect.left;
+          mouseY = event.clientY - rect.top;
+        });
+
+        app.view.addEventListener("click", () => {
+          balls.forEach((ball) => {
+            if (!ball.inPin) {
+              const pin = pins.find((pin) => pin.color === ball.targetColor);
+              const angleToPin = Math.atan2(pin.y - ball.y, pin.x - ball.x);
+              ball.vx += Math.cos(angleToPin) * 0.4; // Adjust this factor as needed
+              ball.vy += Math.sin(angleToPin) * 0.4; // Adjust this factor as needed
+            }
+          });
+        });
+
+        app.ticker.add(() => {
+          let allInPlace = true;
+
+          orbRadius = AVOID_DISTANCE + Math.sin(app.ticker.lastTime / 300) * 10;
+          mouseOrb.clear();
+          mouseOrb.lineStyle(4, 0xff0000, 0.8);
+          mouseOrb.drawCircle(mouseX, mouseY, orbRadius);
+
+          balls.forEach((ball) => {
+            if (!ball.inPin) {
+              const dx = ball.x - mouseX;
+              const dy = ball.y - mouseY;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance < orbRadius) {
+                const angle = Math.atan2(dy, dx);
+                ball.vx += Math.cos(angle) * 0.5;
+                ball.vy += Math.sin(angle) * 0.5;
+              }
+
+              ball.x += ball.vx;
+              ball.y += ball.vy;
+
+              if (
+                ball.x <= ball.radius ||
+                ball.x >= app.screen.width - ball.radius
+              ) {
+                ball.vx *= -1;
+              }
+              if (
+                ball.y <= ball.radius ||
+                ball.y >= app.screen.height - ball.radius
+              ) {
+                ball.vy *= -1;
+              }
+
+              const pin = pins.find((pin) => pin.color === ball.targetColor);
+              const pinDx = ball.x - pin.x;
+              const pinDy = ball.y - pin.y;
+              const pinDistance = Math.sqrt(pinDx * pinDx + pinDy * pinDy);
+
+              ball.radius = mapRange(
+                pinDistance,
+                0,
+                app.screen.width,
+                MIN_RADIUS,
+                MAX_RADIUS
+              );
+
+              ball.clear();
+              ball.beginFill(ball.targetColor);
+              ball.drawCircle(0, 0, ball.radius);
+              ball.endFill();
+
+              if (!ball.inPin && Math.abs(pinDx) < 25 && Math.abs(pinDy) < 25) {
+                ball.vx = 0;
+                ball.vy = 0;
+                ball.inPin = true;
+              }
+            }
+
+            allInPlace = allInPlace && ball.inPin;
+          });
+
+          if (allInPlace && !winText) {
+            winText = new Text("You Win!", winTextStyle);
+            winText.x = app.screen.width / 2 - winText.width / 2;
+            winText.y = app.screen.height / 2 - 30;
+            app.stage.addChild(winText);
+          }
+
+          if (winText) {
+            winText.alpha = Math.abs(Math.sin(app.ticker.lastTime / 100));
+          }
+        });
+
+        function mapRange(value, inMin, inMax, outMin, outMax) {
+          return (
+            ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
+          );
+        }
+      })();
+    </script>
+  </body>
 </html>
