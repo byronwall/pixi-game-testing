@@ -3,7 +3,7 @@ import {
   Graphics,
   Text,
   TextStyle,
-} from "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.3.2/pixi.min.js";
+} from "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.5.1/pixi.min.js";
 
 (async () => {
   const app = new Application();
