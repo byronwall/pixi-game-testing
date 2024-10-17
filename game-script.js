@@ -1,9 +1,9 @@
-import {
-  Application,
-  Graphics,
-  Text,
-  TextStyle,
-} from "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.5.1/pixi.min.js";
+import * as PIXI from "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.5.1/pixi.min.js";
+
+const Application = PIXI.Application;
+const Graphics = PIXI.Graphics;
+const Text = PIXI.Text;
+const TextStyle = PIXI.TextStyle;
 
 (async () => {
   const app = new Application();
