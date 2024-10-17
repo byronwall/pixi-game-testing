@@ -93,13 +93,23 @@
           align: "center",
         });
 
-        app.view.addEventListener("mousemove", (event) => {
+        // Common function to update mouse or touch position
+        const updatePosition = (x, y) => {
           const rect = app.view.getBoundingClientRect();
-          mouseX = event.clientX - rect.left;
-          mouseY = event.clientY - rect.top;
+          mouseX = x - rect.left;
+          mouseY = y - rect.top;
+        };
+
+        app.view.addEventListener("mousemove", (event) => {
+          updatePosition(event.clientX, event.clientY);
         });
 
-        app.view.addEventListener("click", () => {
+        app.view.addEventListener("touchmove", (event) => {
+          const touch = event.touches[0];
+          updatePosition(touch.clientX, touch.clientY);
+        });
+
+        const onClickOrTouch = () => {
           balls.forEach((ball) => {
             if (!ball.inPin) {
               const pin = pins.find((pin) => pin.color === ball.targetColor);
@@ -108,15 +118,23 @@
               ball.vy += Math.sin(angleToPin) * 0.4; // Adjust this factor as needed
             }
           });
-        });
+        };
+
+        app.view.addEventListener("click", onClickOrTouch);
+        app.view.addEventListener("touchstart", onClickOrTouch);
 
         app.ticker.add(() => {
           let allInPlace = true;
 
           orbRadius = AVOID_DISTANCE + Math.sin(app.ticker.lastTime / 300) * 10;
           mouseOrb.clear();
-          mouseOrb.lineStyle(4, 0xff0000, 0.8);
+          // draw an annular region around the mouse pointer
+          mouseOrb.lineStyle(2, 0xffffff, 0.5);
           mouseOrb.drawCircle(mouseX, mouseY, orbRadius);
+
+          mouseOrb.beginFill(0xffffff, 0.1);
+
+          mouseOrb.endFill();
 
           balls.forEach((ball) => {
             if (!ball.inPin) {
