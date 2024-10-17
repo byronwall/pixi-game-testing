@@ -1,5 +1,7 @@
 import * as PIXI from "https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.5.1/pixi.min.js";
 
+console.log("PIXI", PIXI);
+
 const Application = PIXI.Application;
 const Graphics = PIXI.Graphics;
 const Text = PIXI.Text;
